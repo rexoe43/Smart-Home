@@ -1,6 +1,6 @@
 # Smart-Home (Alexa+)
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import Dict, Any, Callable, Literal, Optional
@@ -29,6 +29,27 @@ app = FastAPI(
     description="Backend para Alexa+",
     version="1.0.0",
 )
+
+@app.post("/alexa-webhook")
+async def alexa_webhook(request: Request):
+    payload = await request.json()
+    intent_name = payload.get("request", {}).get("intent", {}).get("name")
+
+    if intent_name == "ControlDispositivoIntent":
+        mensaje = "Comando recibido: Apagando la televisión"
+    else:
+        mensaje = "Hola, comando genérico recibido"
+    
+    return {
+        "version": "1.0",
+        "response": {
+            "outputSpeech": {
+                "type": "PlainText",
+                "text": "Conexión exitosa"
+            },
+            "shouldEndSession": True
+        }
+    }
 
 # CORS
 app.add_middleware(
@@ -168,6 +189,11 @@ class ToolInfo(BaseModel):
     schema: Dict[str, Any]
 
 # Endpoints
+
+@app.get("/")
+async def root():
+    return {"message": "Smart Home Activada", "status": "online"}
+
 @app.get("/api/status", response_model=StatusResponse)
 async def get_status() -> StatusResponse:
     """Devuelve el estado actual de la casa"""
