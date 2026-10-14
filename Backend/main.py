@@ -33,23 +33,63 @@ app = FastAPI(
 @app.post("/alexa-webhook")
 async def alexa_webhook(request: Request):
     payload = await request.json()
+    logger.info("Payload recibido de Alexa: %s", json.dumps(payload))
+
+    request_type = payload.get("request", {}).get("type")
     intent_name = payload.get("request", {}).get("intent", {}).get("name")
 
-    if intent_name == "ControlDispositivoIntent":
-        mensaje = "Comando recibido: Apagando la televisión"
-    else:
-        mensaje = "Hola, comando genérico recibido"
+    if request_type == "LaunchRequest":
+        return {
+            "version": "1.0",
+            "response": {
+                "outputSpeech": {
+                    "type": "PlainText",
+                    "text": "Bienvenido a Smart Home. ¿Que deseas realizar?"
+                },
+                "shouldEndSession": False
+            }
+        }
     
+    
+    if intent_name in ["AMAZON.StopIntent", "AMAZON.CancelIntent"]:
+        return {
+            "version": "1.0",
+            "response": {
+                "outputSpeech": {
+                    "type": "PlainText",
+                    "text": mensaje
+                },
+                "shouldEndSession": True
+            }
+        }
+
+    if intent_name == "ControlDispositivoIntent":
+            slots = payload.get("request", {}).get("intent", {}).get("slots", {})
+            accion_slot = slots.get("estado", {}).get("value", "on")
+            state_val = "off" if any(k in accion_slot.lower() for k in ["apaga", "off", "cerrar"]) else "on"
+
+            result = execute_tool("control_living_room_light", {"state": state_val})
+            mensaje = result.get("result", "Comando ejecutado correctamente")
+    else:
+        mensaje = "Recibí el intento pero aún no está configurado"
+
     return {
         "version": "1.0",
         "response": {
-            "outputSpeech": {
-                "type": "PlainText",
-                "text": "Conexión exitosa"
-            },
-            "shouldEndSession": True
+                "outputSpeech": {
+                    "type": "PlainText",
+                    "text": mensaje
+                },
+                "reprompt": {
+                    "outputSpeech": {
+                        "type": "PlainText",
+                        "text": "¿Deseas realizar otra petición?"
+                    }
+                },
+                "shouldEndSession": False
         }
     }
+    
 
 # CORS
 app.add_middleware(
