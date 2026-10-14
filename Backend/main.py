@@ -121,14 +121,14 @@ TOOL_REGISTRY: Dict[str, Dict[str, Any]] = {
     },
 }
 
-# Lenguage interperter
+# Language interperter
 def interpret_command(user_message: str) -> Dict[str, Any]:
     """
     Interpreta un comando en lenguaje natural y devuelve la herramienta
     """
     msg = user_message.lower().strip()
 
-    # Luz de la sala
+    # Living room light
     if any(k in msg for k in ["luz", "light", "lampara", "lámpara"]):
         if any(k in msg for k in ["enciende", "encender", "prende", "on", "activar"]):
             return {"tool": "control_living_room_light", "args": {"state": "on"}}
@@ -143,11 +143,11 @@ def interpret_command(user_message: str) -> Dict[str, Any]:
             if 10 <= temp <= 35:
                 return {"tool": "adjust_temperature", "args": {"target_temp": temp}}
 
-    # Estado general
+    # General Status
     if any(k in msg for k in ["estado", "status", "como esta", "cómo esta", "resumen"]):
         return {"tool": "get_home_status", "args": {}}
 
-    # Comando no reconocido
+    # Comando unknown
     return {"tool": None, "args": {}}
 
 # Tools executer
