@@ -1,0 +1,7 @@
+__pycache__/
+*.py[cod]
+Frontend/node_modules/
+Frontend/dist/
+Frontend/.env
+Frontend/.env.*
+!Frontend/.env.example
