@@ -1,5 +1,6 @@
 # Smart-Home (Alexa+)
 
+from datetime import datetime
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -11,7 +12,7 @@ import logging
 # Logging
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s - [%(levelname)s] - %(message)s"
+    format="%(asctime)s  [%(levelname)s] - %(message)s"
 )
 logger = logging.getLogger("smart-home")
 
@@ -30,6 +31,22 @@ app = FastAPI(
     version="1.0.0",
 )
 
+action_history = []
+def registrar_evento(dispositivo: str, accion: str, resultado: str):
+    """
+    Save the detailed registry of any petition
+    """
+    evento = {
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "device": dispositivo,
+        "action": accion,
+        "result": resultado
+    }
+    action_history.insert(0, evento)
+    if len(action_history) > 20:
+        action_history.pop()
+
+# Webhook Alexa
 @app.post("/alexa-webhook")
 async def alexa_webhook(request: Request):
     payload = await request.json()
@@ -57,11 +74,14 @@ async def alexa_webhook(request: Request):
             "response": {
                 "outputSpeech": {
                     "type": "PlainText",
+                    "text": "Hasta Luego, saliendo de Smart Home"
                     "text": "De acuerdo. Hasta luego."
                 },
                 "shouldEndSession": True
             }
         }
+
+    mensaje = "Recibí el intento pero aún no está configurado"
 
     if intent_name == "ControlDispositivoIntent":
             slots = payload.get("request", {}).get("intent", {}).get("slots", {})
@@ -70,8 +90,8 @@ async def alexa_webhook(request: Request):
 
             result = execute_tool("control_living_room_light", {"state": state_val})
             mensaje = result.get("result", "Comando ejecutado correctamente")
-    else:
-        mensaje = "Recibí el intento pero aún no está configurado"
+
+            registrar_evento("Luz de la Sala", f"Cambiar a {state_val}", mensaje)
 
     return {
         "version": "1.0",
@@ -90,6 +110,10 @@ async def alexa_webhook(request: Request):
         }
     }
     
+#Endpoint for chat history
+@app.get("/history")
+async def get_history():
+    return {"history": action_history}
 
 # CORS
 app.add_middleware(
