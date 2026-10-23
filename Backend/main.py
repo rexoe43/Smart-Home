@@ -75,6 +75,7 @@ async def alexa_webhook(request: Request):
                 "outputSpeech": {
                     "type": "PlainText",
                     "text": "Hasta Luego, saliendo de Smart Home"
+                    "text": "De acuerdo. Hasta luego."
                 },
                 "shouldEndSession": True
             }
@@ -226,7 +227,7 @@ def execute_tool(tool_name: str, args: Dict[str, Any]) -> Dict[str, Any]:
         }
 
     entry = TOOL_REGISTRY[tool_name]
-    schema = type[BaseModel] = entry["schema"]
+    schema: type[BaseModel] = entry["schema"]
     func: Callable = entry["func"]
 
     try:
@@ -325,10 +326,10 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
                     "'dame el estado de la casa'"
                 )
 
-                await websocket.send_json({
-                    "response": response_text,
-                    "state": home_state.copy(),
-                })
+            await websocket.send_json({
+                "response": response_text,
+                "state": home_state.copy(),
+            })
 
     except WebSocketDisconnect:
         logger.info("Cliente desconectado: %s", websocket.client)
