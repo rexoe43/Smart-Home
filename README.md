@@ -156,7 +156,11 @@ Smart-Home/
    ```bash
    pip install fastapi uvicorn pydantic websockets
    ```
-4. Navega a la carpeta del Backend y arranca el servidor:
+   o más rápido
+   ```bash
+   pip install -r requirements.txt
+   ```
+5. Navega a la carpeta del Backend y arranca el servidor:
    ```bash
    cd Backend
    uvicorn main:app --reload --host 0.0.0.0 --port 8000
